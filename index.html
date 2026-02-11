@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Progress Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   CSS VARIABLES & RESET
+   ═══════════════════════════════════════ */
+:root {
+  --bg-0: #06080f;
+  --bg-1: #0c1021;
+  --bg-2: #131a2e;
+  --bg-3: #1a2340;
+  --bg-hover: #1f2b4a;
+  --border: #243052;
+  --border-light: #2d3d66;
+  --tx-0: #f0f2f8;
+  --tx-1: #c4ccde;
+  --tx-2: #8a96b4;
+  --tx-3: #5c6a88;
+  --blue: #4d8df7;
+  --blue-dim: rgba(77,141,247,0.12);
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34,211,238,0.10);
+  --green: #34d399;
+  --green-dim: rgba(52,211,153,0.10);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.10);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.10);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.10);
+  --orange: #fb923c;
+  --orange-dim: rgba(251,146,60,0.10);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 20px rgba(0,0,0,0.35);
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Sarabun', sans-serif;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { font-size: 14px; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg-0);
+  color: var(--tx-0);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 5%, rgba(77,141,247,0.07), transparent),
+    radial-gradient(ellipse 70% 50% at 85% 95%, rgba(52,211,153,0.05), transparent);
+  pointer-events: none;
+}
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* ═══════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════ */
+.dashboard { position:relative; z-index:1; min-height:100vh; }
+
+/* HEADER */
+.hdr {
+  position:sticky; top:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 16px 28px;
+  background: rgba(6,8,15,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+.hdr-left { display:flex; align-items:center; gap:16px; }
+
+.hdr-logo {
+  width:42px; height:42px;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  border-radius:11px;
+  display:grid; place-items:center;
+  font-weight:800; font-size:16px; color:#fff;
+  box-shadow: 0 0 24px rgba(77,141,247,0.25);
+  letter-spacing: -1px;
+}
+
+.hdr h1 { font-size:1.25rem; font-weight:700; letter-spacing:-0.3px; line-height:1.2; }
+.hdr .sub { font-size:0.8rem; color:var(--tx-2); font-weight:400; }
+
+.hdr-right { display:flex; align-items:center; gap:12px; }
+
+.hdr-date {
+  font-family:var(--mono); font-size:0.78rem;
+  color:var(--tx-2);
+  background:var(--bg-2); padding:6px 14px;
+  border-radius:6px; border:1px solid var(--border);
+}
+
+.badge {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 16px; border-radius:100px;
+  font-size:0.78rem; font-weight:600;
+}
+.badge.ok { background:var(--green-dim); color:var(--green); border:1px solid rgba(52,211,153,0.2); }
+.badge .pulse { width:7px;height:7px;border-radius:50%;background:currentColor;animation:pls 2s infinite; }
+@keyframes pls { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* MAIN */
+.main { padding:24px 28px; max-width:1560px; margin:auto; }
+
+/* TABS */
+.tabs { display:flex; gap:3px; background:var(--bg-1); padding:3px; border-radius:12px; width:fit-content; margin-bottom:28px; border:1px solid var(--border); }
+.tabs button {
+  padding:9px 22px; border:none; background:none;
+  font-family:var(--sans); font-size:0.85rem; font-weight:500;
+  color:var(--tx-2); border-radius:9px; cursor:pointer; transition:.25s;
+}
+.tabs button:hover { color:var(--tx-0); }
+.tabs button.on { background:var(--blue); color:#fff; box-shadow:0 2px 14px rgba(77,141,247,0.3); }
+
+/* SECTION LABEL */
+.sec { font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--tx-3); font-weight:700; margin-bottom:14px; }
+
+/* GRID */
+.g5 { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:24px; }
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+.g32 { display:grid; grid-template-columns:5fr 3fr; gap:16px; margin-bottom:24px; }
+
+/* CARD */
+.c { background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:.3s; }
+.c:hover { border-color:var(--border-light); }
+.c-h { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border); }
+.c-t { font-size:0.92rem; font-weight:600; display:flex; align-items:center; gap:10px; }
+.c-t .ic { width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:14px; }
+.c-b { padding:20px; }
+
+.legend { display:flex; gap:16px; font-size:0.72rem; color:var(--tx-2); }
+.legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:4px; vertical-align:middle; }
+
+/* ═══════════════════════════════════════
+   KPI CARDS
+   ═══════════════════════════════════════ */
+.kpi { padding:20px; position:relative; overflow:hidden; }
+.kpi::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; }
+.kpi:nth-child(1)::before { background:linear-gradient(90deg,var(--blue),var(--cyan)); }
+.kpi:nth-child(2)::before { background:linear-gradient(90deg,var(--green),var(--cyan)); }
+.kpi:nth-child(3)::before { background:linear-gradient(90deg,var(--amber),var(--orange)); }
+.kpi:nth-child(4)::before { background:linear-gradient(90deg,var(--purple),var(--blue)); }
+.kpi:nth-child(5)::before { background:linear-gradient(90deg,var(--red),var(--orange)); }
+
+.kpi-label { font-size:0.7rem; color:var(--tx-3); text-transform:uppercase; letter-spacing:.8px; font-weight:700; margin-bottom:10px; }
+.kpi-val { font-family:var(--mono); font-size:2rem; font-weight:700; line-height:1; margin-bottom:6px; }
+.kpi-sub { font-size:0.75rem; color:var(--tx-2); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.chip { font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:4px; }
+.chip.pos { background:var(--green-dim); color:var(--green); }
+.chip.neg { background:var(--red-dim); color:var(--red); }
+
+/* ═══════════════════════════════════════
+   PROGRESS BARS (Plan vs Actual)
+   ═══════════════════════════════════════ */
+.pb { margin-bottom:16px; }
+.pb:last-child { margin-bottom:0; }
+.pb-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.pb-name { font-size:0.82rem; font-weight:500; }
+.pb-wt { font-size:0.68rem; color:var(--tx-3); }
+.pb-vals { font-family:var(--mono); font-size:0.72rem; color:var(--tx-2); }
+.pb-track { height:9px; background:rgba(255,255,255,0.04); border-radius:5px; position:relative; overflow:hidden; }
+.pb-plan { position:absolute; inset:0; height:100%; border-radius:5px; background:rgba(77,141,247,0.18); border-right:2px dashed rgba(77,141,247,0.6); }
+.pb-act { position:absolute; top:0;left:0; height:100%; border-radius:5px; transition:width 1.2s ease; }
+.pb-act.ahead { background:linear-gradient(90deg,var(--green),var(--cyan)); }
+.pb-act.behind { background:linear-gradient(90deg,var(--red),var(--orange)); }
+.pb-act.ok { background:linear-gradient(90deg,var(--blue),var(--cyan)); }
+
+/* ═══════════════════════════════════════
+   CANVAS / CHART
+   ═══════════════════════════════════════ */
+.chart-wrap { position:relative; width:100%; }
+.chart-wrap canvas { width:100%!important; display:block; }
+
+/* ═══════════════════════════════════════
+   MILESTONES
+   ═══════════════════════════════════════ */
+.ms { display:flex; gap:14px; align-items:flex-start; margin-bottom:4px; }
+.ms-marker { display:flex; flex-direction:column; align-items:center; min-width:36px; }
+.ms-dot { width:14px;height:14px;border-radius:50%;border:3px solid;background:var(--bg-2);z-index:2; }
+.ms-dot.done { border-color:var(--green); background:var(--green); }
+.ms-dot.now { border-color:var(--blue); box-shadow:0 0 10px rgba(77,141,247,0.4); }
+.ms-dot.soon { border-color:var(--tx-3); }
+.ms-line { width:2px; height:36px; background:var(--border); }
+.ms-body { padding-bottom:14px; }
+.ms-title { font-size:0.88rem; font-weight:600; }
+.ms-date { font-family:var(--mono); font-size:0.75rem; color:var(--tx-2); }
+.ms-note { font-size:0.72rem; color:var(--green); margin-top:3px; }
+
+/* ═══════════════════════════════════════
+   BUDGET RING
+   ═══════════════════════════════════════ */
+.bud { display:flex; gap:24px; align-items:center; }
+.bud-ring { position:relative; width:130px; height:130px; flex-shrink:0; }
+.bud-ring svg { transform:rotate(-90deg); width:130px; height:130px; }
+.bud-ctr { position:absolute; inset:0; display:grid; place-items:center; text-align:center; }
+.bud-ctr strong { font-family:var(--mono); font-size:1.35rem; font-weight:700; display:block; }
+.bud-ctr small { font-size:0.68rem; color:var(--tx-3); }
+.bud-rows { flex:1; display:flex; flex-direction:column; gap:8px; }
+.bud-row { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:6px; }
+.bud-row span:first-child { font-size:0.8rem; color:var(--tx-2); }
+.bud-row span:last-child { font-family:var(--mono); font-size:0.85rem; font-weight:600; }
+
+/* ═══════════════════════════════════════
+   TASK / GANTT TABLE
+   ═══════════════════════════════════════ */
+.tbl-wrap { overflow-x:auto; }
+table.tbl { width:100%; border-collapse:collapse; font-size:0.82rem; }
+.tbl th { text-align:left; padding:10px 12px; font-size:0.68rem; text-transform:uppercase; letter-spacing:.8px; color:var(--tx-3); font-weight:700; border-bottom:1px solid var(--border); white-space:nowrap; }
+.tbl td { padding:9px 12px; border-bottom:1px solid rgba(36,48,82,0.4); vertical-align:middle; }
+.tbl tr:hover td { background:rgba(77,141,247,0.03); }
+
+.t-name { font-weight:600; white-space:nowrap; }
+.t-who { display:flex; align-items:center; gap:7px; }
+.t-av { width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:0.65rem;font-weight:700;color:#fff; }
+.t-st { padding:3px 11px; border-radius:100px; font-size:0.68rem; font-weight:700; display:inline-block; white-space:nowrap; }
+.t-st.done { background:var(--green-dim); color:var(--green); }
+.t-st.wip { background:var(--blue-dim); color:var(--blue); }
+.t-st.late { background:var(--red-dim); color:var(--red); }
+.t-st.wait { background:rgba(255,255,255,0.04); color:var(--tx-3); }
+
+.gantt { position:relative; height:20px; min-width:280px; }
+.gantt-plan { position:absolute; height:5px; top:0; border-radius:3px; background:rgba(77,141,247,0.2); border:1px solid rgba(77,141,247,0.35); }
+.gantt-act { position:absolute; height:5px; top:10px; border-radius:3px; }
+.gantt-act.done { background:var(--green); }
+.gantt-act.wip { background:var(--blue); }
+.gantt-act.late { background:var(--red); }
+.gantt-act.wait { background:var(--tx-3); opacity:.3; }
+
+/* ═══════════════════════════════════════
+   EVM
+   ═══════════════════════════════════════ */
+.evm-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.evm-item { display:flex; justify-content:space-between; padding:9px 12px; background:rgba(255,255,255,0.02); border-radius:6px; }
+.evm-item span:first-child { font-size:0.78rem; color:var(--tx-2); }
+.evm-item span:last-child { font-family:var(--mono); font-size:0.85rem; font-weight:600; }
+
+.evm-ok { background:rgba(52,211,153,0.06)!important; border:1px solid rgba(52,211,153,0.12); }
+.evm-ok span:last-child { color:var(--green); }
+
+/* ═══════════════════════════════════════
+   TEAM
+   ═══════════════════════════════════════ */
+.team-g { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.tm { display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.02); border-radius:var(--radius-sm); border:1px solid rgba(36,48,82,0.3); }
+.tm-av { width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-size:0.88rem;font-weight:700;color:#fff;flex-shrink:0; }
+.tm-info { flex:1; }
+.tm-name { font-size:0.82rem; font-weight:600; }
+.tm-role { font-size:0.68rem; color:var(--tx-3); }
+.tm-bar { width:100%; height:5px; background:rgba(255,255,255,0.04); border-radius:3px; margin-top:5px; overflow:hidden; }
+.tm-fill { height:100%; border-radius:3px; }
+.tm-pct { font-family:var(--mono); font-size:0.75rem; font-weight:600; }
+
+.wk-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.wk { text-align:center; padding:10px 6px; background:rgba(255,255,255,0.02); border-radius:6px; border:1px solid rgba(36,48,82,0.3); }
+.wk-d { font-size:0.68rem; color:var(--tx-3); margin-bottom:4px; }
+.wk-n { font-family:var(--mono); font-size:1.15rem; font-weight:600; }
+
+.res-box { margin-top:16px; padding:14px; background:rgba(255,255,255,0.02); border-radius:var(--radius-sm); border:1px solid rgba(36,48,82,0.3); }
+.res-box h4 { font-size:0.82rem; font-weight:600; margin-bottom:10px; }
+.res-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.82rem; }
+.res-row dt { color:var(--tx-2); }
+.res-row dd { text-align:right; font-weight:600; }
+
+/* ═══════════════════════════════════════
+   RISKS
+   ═══════════════════════════════════════ */
+.rsk { display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.02); border-radius:var(--radius-sm); border:1px solid rgba(36,48,82,0.3); margin-bottom:10px; }
+.rsk:last-child { margin-bottom:0; }
+.rsk-bar { width:6px; height:44px; border-radius:3px; flex-shrink:0; }
+.rsk-bar.hi { background:var(--red); }
+.rsk-bar.md { background:var(--amber); }
+.rsk-bar.lo { background:var(--green); }
+.rsk-body { flex:1; }
+.rsk-title { font-size:0.82rem; font-weight:600; }
+.rsk-desc { font-size:0.72rem; color:var(--tx-2); }
+.rsk-mit { font-size:0.68rem; color:var(--cyan); margin-top:3px; }
+.rsk-imp { font-size:0.68rem; font-weight:700; padding:3px 10px; border-radius:4px; white-space:nowrap; }
+.rsk-imp.hi { background:var(--red-dim); color:var(--red); }
+.rsk-imp.md { background:var(--amber-dim); color:var(--amber); }
+.rsk-imp.lo { background:var(--green-dim); color:var(--green); }
+
+.mx { display:grid; grid-template-columns:auto 1fr 1fr 1fr; grid-template-rows:auto 1fr 1fr 1fr; gap:4px; font-size:0.68rem; text-align:center; }
+.mx-hd { padding:8px; font-weight:700; color:var(--tx-3); display:grid; place-items:center; }
+.mx-cell { padding:16px 8px; border-radius:6px; display:grid; place-items:center; font-family:var(--mono); font-size:1.1rem; font-weight:700; }
+
+/* ═══════════════════════════════════════
+   LOADING / EDIT MODE
+   ═══════════════════════════════════════ */
+.loading { display:grid; place-items:center; padding:60px; color:var(--tx-3); font-size:0.9rem; }
+.spin { width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 12px; }
+@keyframes sp { to{transform:rotate(360deg)} }
+
+.edit-bar {
+  display:flex; align-items:center; gap:10px; padding:10px 20px;
+  background:var(--amber-dim); border:1px solid rgba(251,191,36,0.2);
+  border-radius:var(--radius-sm); margin-bottom:20px; font-size:0.82rem; color:var(--amber);
+}
+.edit-bar input {
+  flex:1; padding:6px 12px; border:1px solid var(--border); border-radius:6px;
+  background:var(--bg-1); color:var(--tx-0); font-family:var(--mono); font-size:0.78rem;
+}
+.edit-bar button {
+  padding:6px 18px; border:none; border-radius:6px;
+  background:var(--amber); color:#000; font-weight:700; cursor:pointer; font-family:var(--sans);
+}
+
+/* HIDE TABS ON NO-DATA */
+.tab-content { display:none; }
+.tab-content.show { display:block; }
+
+/* RESPONSIVE */
+@media(max-width:1100px) {
+  .g5 { grid-template-columns:repeat(3,1fr); }
+  .g2,.g32 { grid-template-columns:1fr; }
+  .team-g { grid-template-columns:1fr; }
+}
+@media(max-width:700px) {
+  .hdr { flex-direction:column; gap:10px; padding:12px 16px; }
+  .main { padding:16px; }
+  .g5 { grid-template-columns:1fr 1fr; }
+  .wk-grid { grid-template-columns:repeat(4,1fr); }
+  .evm-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="dashboard" id="app">
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-logo">PM</div>
+      <div>
+        <h1 id="projName">Project Progress Dashboard</h1>
+        <div class="sub" id="projSub">กำลังโหลดข้อมูล...</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-date" id="todayDate"></div>
+      <div class="badge ok" id="projBadge"><span class="pulse"></span> <span id="projStatus">—</span></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Google Sheet URL Config -->
+    <div class="edit-bar" id="sheetBar">
+      <span>📎 Google Sheet URL:</span>
+      <input type="text" id="sheetUrl" placeholder="วาง URL ของ Google Sheet ที่นี่ (ต้อง Publish to web ก่อน)" />
+      <button onclick="connectSheet()">เชื่อมต่อ</button>
+      <button onclick="loadSampleData()" style="background:var(--bg-3);color:var(--tx-1);">ใช้ข้อมูลตัวอย่าง</button>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs" id="tabBar" style="display:none;">
+      <button class="on" onclick="showTab(this,'overview')">ภาพรวม</button>
+      <button onclick="showTab(this,'tasks')">งาน/กิจกรรม</button>
+      <button onclick="showTab(this,'scurve')">S-Curve</button>
+      <button onclick="showTab(this,'resources')">ทรัพยากร</button>
+      <button onclick="showTab(this,'risks')">ความเสี่ยง</button>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading" id="loadingMsg" style="display:none;">
+      <div class="spin"></div>
+      กำลังโหลดข้อมูลจาก Google Sheet...
+    </div>
+
+    <!-- ═══ TAB: OVERVIEW ═══ -->
+    <div class="tab-content" id="tab-overview">
+      <div class="sec">ตัวชี้วัดหลัก</div>
+      <div class="g5" id="kpiRow"></div>
+
+      <div class="sec">แผนงาน vs. ผลงานจริง</div>
+      <div class="g2">
+        <div class="c">
+          <div class="c-h">
+            <div class="c-t"><span class="ic" style="background:var(--blue-dim);color:var(--blue);">📊</span> ความก้าวหน้าตามหมวดงาน</div>
+            <div class="legend"><i style="background:rgba(77,141,247,.35);border:1px dashed var(--blue);"></i> แผน <i style="background:var(--green);margin-left:8px;"></i> จริง</div>
+          </div>
+          <div class="c-b" id="progressBars"></div>
+        </div>
+        <div class="c">
+          <div class="c-h">
+            <div class="c-t"><span class="ic" style="background:var(--cyan-dim);color:var(--cyan);">📈</span> S-Curve (ภาพรวม)</div>
+            <div class="legend"><i style="background:var(--blue);"></i> Plan <i style="background:var(--green);margin-left:8px;"></i> Actual</div>
+          </div>
+          <div class="c-b"><div class="chart-wrap" style="height:300px;"><canvas id="cvMini"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="sec">เหตุการณ์สำคัญ & งบประมาณ</div>
+      <div class="g2">
+        <div class="c">
+          <div class="c-h"><div class="c-t"><span class="ic" style="background:var(--purple-dim);color:var(--purple);">🏁</span> Milestones</div></div>
+          <div class="c-b" id="msList"></div>
+        </div>
+        <div class="c">
+          <div class="c-h"><div class="c-t"><span class="ic" style="background:var(--amber-dim);color:var(--amber);">💰</span> สรุปงบประมาณ</div></div>
+          <div class="c-b" id="budgetBox"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: TASKS ═══ -->
+    <div class="tab-content" id="tab-tasks">
+      <div class="sec">ตารางงาน / Gantt View</div>
+      <div class="c">
+        <div class="c-h">
+          <div class="c-t"><span class="ic" style="background:var(--blue-dim);color:var(--blue);">📋</span> รายการงาน</div>
+          <div class="legend"><i style="background:rgba(77,141,247,.3);border:1px solid rgba(77,141,247,.5);"></i>แผน <i style="background:var(--green);margin-left:6px;"></i>เสร็จ <i style="background:var(--blue);margin-left:6px;"></i>กำลังทำ <i style="background:var(--red);margin-left:6px;"></i>ล่าช้า</div>
+        </div>
+        <div class="c-b" style="padding:0;">
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th style="min-width:200px">ชื่องาน</th><th>ผู้รับผิดชอบ</th><th>เริ่ม</th><th>สิ้นสุด</th><th>สถานะ</th><th>%</th><th style="min-width:300px">Timeline</th></tr></thead>
+              <tbody id="taskBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: S-CURVE ═══ -->
+    <div class="tab-content" id="tab-scurve">
+      <div class="sec">S-Curve Analysis</div>
+      <div class="c">
+        <div class="c-h">
+          <div class="c-t"><span class="ic" style="background:var(--cyan-dim);color:var(--cyan);">📈</span> S-Curve — Plan vs Actual vs Earned Value</div>
+          <div class="legend"><i style="background:var(--blue);"></i>Planned <i style="background:var(--green);margin-left:6px;"></i>Actual <i style="background:var(--amber);margin-left:6px;"></i>Earned Value</div>
+        </div>
+        <div class="c-b"><div class="chart-wrap" style="height:400px;"><canvas id="cvFull"></canvas></div></div>
+      </div>
+      <div class="g2" style="margin-top:16px;">
+        <div class="c">
+          <div class="c-h"><div class="c-t"><span class="ic" style="background:var(--green-dim);color:var(--green);">📐</span> EVM Indicators</div></div>
+          <div class="c-b"><div class="evm-grid" id="evmGrid"></div></div>
+        </div>
+        <div class="c">
+          <div class="c-h"><div class="c-t"><span class="ic" style="background:var(--orange-dim);color:var(--orange);">🔮</span> Forecasting</div></div>
+          <div class="c-b" id="forecastBox"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: RESOURCES ═══ -->
+    <div class="tab-content" id="tab-resources">
+      <div class="sec">ทรัพยากรโครงการ</div>
+      <div class="g2">
+        <div class="c">
+          <div class="c-h"><div class="c-t"><span class="ic" style="background:var(--purple-dim);color:var(--purple);">👥</span> ทีมงานหลัก</div></div>
+          <div class="c-b"><div class="team-g" id="teamGrid"></div></div>
+        </div>
+        <div class="c">
+          <div class="c-h"><div class="c-t"><span class="ic" style="background:var(--blue-dim);color:var(--blue);">📊</span> ภาระงานรายสัปดาห์</div></div>
+          <div class="c-b">
+            <div class="wk-grid" id="wkGrid"></div>
+            <div class="res-box" id="resBox"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: RISKS ═══ -->
+    <div class="tab-content" id="tab-risks">
+      <div class="sec">การบริหารความเสี่ยง</div>
+      <div class="g32">
+        <div class="c">
+          <div class="c-h"><div class="c-t"><span class="ic" style="background:var(--red-dim);color:var(--red);">⚠️</span> Risk Register</div></div>
+          <div class="c-b" id="riskList"></div>
+        </div>
+        <div class="c">
+          <div class="c-h"><div class="c-t"><span class="ic" style="background:var(--amber-dim);color:var(--amber);">📌</span> Risk Matrix</div></div>
+          <div class="c-b" id="riskMatrix"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   PROJECT DASHBOARD — GOOGLE SITES COMPATIBLE
+   
+   วิธีใช้งาน:
+   1. สร้าง Google Sheet ตาม template (ดูด้านล่าง)
+   2. File > Share > Publish to web > เลือก CSV
+   3. คัดลอก URL มาวางในช่อง Google Sheet URL
+   4. หรือ กดปุ่ม "ใช้ข้อมูลตัวอย่าง" เพื่อดูตัวอย่าง
+   
+   Google Sheet Tabs ที่ต้องมี:
+   - config     : ข้อมูลโครงการ
+   - progress   : ความก้าวหน้าตามหมวด
+   - scurve     : ข้อมูล S-Curve รายเดือน
+   - tasks      : รายการงาน
+   - milestones : เหตุการณ์สำคัญ
+   - budget     : งบประมาณ
+   - evm        : Earned Value Management
+   - team       : ทีมงาน
+   - risks      : ความเสี่ยง
+═══════════════════════════════════════════════════════════ */
+
+// ============ STATE ============
+let D = {}; // All data
+
+// ============ DATE ============
+const thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const thDays = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+function todayTH() {
+  const d = new Date();
+  return `${thDays[d.getDay()]} ${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+document.getElementById('todayDate').textContent = '📅 ' + todayTH();
+
+// ============ TAB SWITCH ============
+function showTab(btn, id) {
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('show'));
+  document.getElementById('tab-' + id).classList.add('show');
+  if (id === 'scurve') setTimeout(() => drawSCurve('cvFull', 400, true), 50);
+  if (id === 'overview') setTimeout(() => drawSCurve('cvMini', 300, false), 50);
+}
+
+// ============ GOOGLE SHEET CONNECT ============
+function sheetCSVUrl(baseUrl, gid) {
+  // Convert Google Sheet URL to CSV export
+  const match = baseUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (!match) return null;
+  return `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv&gid=${gid}`;
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  return lines.slice(1).map(line => {
+    const vals = line.match(/(".*?"|[^,]*)/g) || [];
+    const obj = {};
+    headers.forEach((h, i) => {
+      let v = (vals[i] || '').trim().replace(/^"|"$/g, '');
+      obj[h] = v;
+    });
+    return obj;
+  });
+}
+
+async function connectSheet() {
+  const url = document.getElementById('sheetUrl').value.trim();
+  if (!url) { alert('กรุณาวาง URL ของ Google Sheet'); return; }
+  
+  document.getElementById('loadingMsg').style.display = 'block';
+  document.getElementById('sheetBar').style.display = 'none';
+  
+  try {
+    // You need to publish each sheet tab and note the gid
+    // For simplicity, we'll try to fetch the first sheet
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (!match) throw new Error('URL ไม่ถูกต้อง');
+    
+    const sheetId = match[1];
+    
+    // Try fetching as published CSV (user must publish to web first)
+    const resp = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`);
+    if (!resp.ok) throw new Error('ไม่สามารถดึงข้อมูลได้ กรุณาตรวจสอบว่า Publish to web แล้ว');
+    
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    
+    // Build data from the sheet
+    // This expects a specific format - see template
+    buildDataFromSheet(rows);
+    
+  } catch(e) {
+    alert('ข้อผิดพลาด: ' + e.message + '\n\nจะใช้ข้อมูลตัวอย่างแทน');
+    loadSampleData();
+  }
+}
+
+function buildDataFromSheet(rows) {
+  // The sheet should have these columns for a simple single-sheet setup:
+  // section, key, value, value2, value3, value4, value5, value6
+  // This allows all data to be on one sheet for easy management
+  
+  try {
+    const getSection = (sec) => rows.filter(r => r.section === sec);
+    
+    // Config
+    const cfg = {};
+    getSection('config').forEach(r => { cfg[r.key] = r.value; });
+    
+    D = {
+      config: {
+        name: cfg.name || 'โครงการ',
+        sub: cfg.sub || '',
+        status: cfg.status || 'ดำเนินงานปกติ',
+        totalDays: +cfg.totalDays || 540,
+        remainDays: +cfg.remainDays || 248,
+        endDate: cfg.endDate || '',
+        overallPlan: +cfg.overallPlan || 0,
+        overallActual: +cfg.overallActual || 0,
+        taskTotal: +cfg.taskTotal || 0,
+        taskDone: +cfg.taskDone || 0,
+        taskWip: +cfg.taskWip || 0,
+        taskLate: +cfg.taskLate || 0,
+        riskCount: +cfg.riskCount || 0,
+        riskHigh: +cfg.riskHigh || 0,
+        riskMed: +cfg.riskMed || 0,
+        riskLow: +cfg.riskLow || 0,
+      },
+      budget: {
+        total: +cfg.budgetTotal || 0,
+        spent: +cfg.budgetSpent || 0,
+        remaining: +cfg.budgetRemain || 0,
+        estimate: +cfg.budgetEst || 0,
+      },
+      progress: getSection('progress').map(r => ({
+        name: r.key, plan: +r.value, actual: +r.value2, weight: +r.value3
+      })),
+      scurve: {
+        months: getSection('scurve').map(r => r.key),
+        plan: getSection('scurve').map(r => +r.value),
+        actual: getSection('scurve').map(r => +r.value2).filter(v => v > 0),
+        ev: getSection('scurve').map(r => +r.value3).filter(v => v > 0),
+      },
+      tasks: getSection('tasks').map(r => ({
+        name: r.key, assignee: r.value, status: r.value2,
+        start: +r.value3, planEnd: +r.value4, pct: +r.value5, color: r.value6 || '#4d8df7',
+        startDate: r.value3, endDate: r.value4,
+      })),
+      milestones: getSection('milestones').map(r => ({
+        title: r.key, date: r.value, status: r.value2, note: r.value3 || ''
+      })),
+      evm: {},
+      team: getSection('team').map(r => ({
+        name: r.key, role: r.value, workload: +r.value2, color: r.value3 || '#4d8df7'
+      })),
+      risks: getSection('risks').map(r => ({
+        title: r.key, desc: r.value, level: r.value2, impact: r.value3, mitigation: r.value4 || ''
+      })),
+    };
+    
+    // EVM
+    const evmRows = getSection('evm');
+    evmRows.forEach(r => { D.evm[r.key] = r.value; });
+    
+    renderAll();
+  } catch(e) {
+    console.error(e);
+    alert('รูปแบบข้อมูลไม่ตรง จะใช้ข้อมูลตัวอย่าง');
+    loadSampleData();
+  }
+}
+
+// ============ SAMPLE DATA ============
+function loadSampleData() {
+  D = {
+    config: {
+      name: 'โครงการก่อสร้างอาคาร Central Tower',
+      sub: 'PRJ-2025-0042 · สัญญา CNT-2568/0042',
+      status: 'ดำเนินงานปกติ',
+      totalDays: 540, remainDays: 248,
+      endDate: '15 ต.ค. 2569',
+      overallPlan: 58.0, overallActual: 62.4,
+      taskTotal: 82, taskDone: 47, taskWip: 24, taskLate: 3,
+      riskCount: 5, riskHigh: 1, riskMed: 2, riskLow: 2,
+    },
+    budget: { total: 320000000, spent: 185920000, remaining: 134080000, estimate: 308500000 },
+    progress: [
+      { name: 'งานโครงสร้าง (Structure)', plan: 85, actual: 92, weight: 35 },
+      { name: 'งานสถาปัตยกรรม (Architecture)', plan: 55, actual: 52, weight: 25 },
+      { name: 'งานระบบไฟฟ้า (Electrical)', plan: 40, actual: 45, weight: 15 },
+      { name: 'งานระบบสุขาภิบาล (Sanitary)', plan: 38, actual: 35, weight: 10 },
+      { name: 'งานระบบเครื่องกล (Mechanical)', plan: 30, actual: 33, weight: 10 },
+      { name: 'งานภูมิทัศน์ (Landscape)', plan: 10, actual: 8, weight: 5 },
+    ],
+    scurve: {
+      months: ['ม.ค.68','ก.พ.68','มี.ค.68','เม.ย.68','พ.ค.68','มิ.ย.68','ก.ค.68','ส.ค.68','ก.ย.68','ต.ค.68','พ.ย.68','ธ.ค.68','ม.ค.69','ก.พ.69','มี.ค.69','เม.ย.69','พ.ค.69','มิ.ย.69','ก.ค.69','ส.ค.69','ก.ย.69','ต.ค.69'],
+      plan: [1,3,6,10,15,21,28,35,42,48,54,58,63,68,73,78,83,88,92,95,98,100],
+      actual: [1,3,7,12,17,24,31,38,45,51,56,60,62.4],
+      ev: [1,3.2,7.5,12.5,18,25,32,39,46,52,57,61,63.8],
+    },
+    tasks: [
+      { name:'เสาเข็ม & ฐานราก', assignee:'ทีม A', status:'done', start:0, planEnd:14, pct:100, color:'#4d8df7' },
+      { name:'โครงสร้าง ชั้น 1-10', assignee:'ทีม A', status:'done', start:10, planEnd:32, pct:100, color:'#22d3ee' },
+      { name:'โครงสร้าง ชั้น 11-20', assignee:'ทีม A', status:'done', start:28, planEnd:52, pct:100, color:'#22d3ee' },
+      { name:'โครงสร้าง ชั้น 21-30', assignee:'ทีม B', status:'wip', start:46, planEnd:68, pct:72, color:'#a78bfa' },
+      { name:'ก่ออิฐ-ฉาบปูน ชั้น 1-10', assignee:'ทีม C', status:'wip', start:34, planEnd:56, pct:65, color:'#fbbf24' },
+      { name:'ก่ออิฐ-ฉาบปูน ชั้น 11-20', assignee:'ทีม C', status:'wip', start:50, planEnd:72, pct:30, color:'#fbbf24' },
+      { name:'ระบบไฟฟ้า ชั้น 1-10', assignee:'ทีม D', status:'wip', start:40, planEnd:62, pct:55, color:'#34d399' },
+      { name:'ระบบสุขาภิบาล ชั้น 1-10', assignee:'ทีม E', status:'late', start:42, planEnd:64, pct:35, color:'#f87171' },
+      { name:'Curtain Wall กระจก', assignee:'ทีม F', status:'wip', start:55, planEnd:78, pct:18, color:'#fb923c' },
+      { name:'ระบบ HVAC', assignee:'ทีม D', status:'wip', start:50, planEnd:76, pct:25, color:'#34d399' },
+      { name:'งานลิฟต์', assignee:'ทีม G', status:'wait', start:60, planEnd:80, pct:5, color:'#a78bfa' },
+      { name:'ตกแต่งภายใน', assignee:'ทีม H', status:'wait', start:65, planEnd:86, pct:0, color:'#4d8df7' },
+      { name:'ภูมิทัศน์ & ถนน', assignee:'ทีม I', status:'wait', start:75, planEnd:90, pct:0, color:'#22d3ee' },
+      { name:'Commissioning', assignee:'ทุกทีม', status:'wait', start:82, planEnd:95, pct:0, color:'#f87171' },
+      { name:'ส่งมอบโครงการ', assignee:'PM', status:'wait', start:92, planEnd:100, pct:0, color:'#fbbf24' },
+    ],
+    milestones: [
+      { title:'เริ่มโครงการ (NTP)', date:'15 ม.ค. 2568', status:'done', note:'' },
+      { title:'งานฐานรากเสร็จ', date:'28 เม.ย. 2568', status:'done', note:'' },
+      { title:'โครงสร้างชั้น 1-10', date:'15 ส.ค. 2568', status:'done', note:'' },
+      { title:'Topping Off', date:'30 มี.ค. 2569', status:'now', note:'คาดว่าเร็วกว่าแผน 2 สัปดาห์' },
+      { title:'ระบบทั้งหมดเสร็จ', date:'30 มิ.ย. 2569', status:'soon', note:'' },
+      { title:'ส่งมอบโครงการ', date:'15 ต.ค. 2569', status:'soon', note:'' },
+    ],
+    evm: {
+      PV:'185.6M', EV:'199.7M', AC:'185.9M', BAC:'320.0M',
+      SPI:'1.076', CPI:'1.074', SV:'+14.1M', CV:'+13.8M',
+      EAC:'297.9M', ETC:'112.0M', VAC:'+22.1M', TCPI:'0.895',
+    },
+    team: [
+      { name:'สมชาย วงศ์ดี', role:'Project Manager', workload:92, color:'#4d8df7' },
+      { name:'วิไล สุขใจ', role:'Site Engineer', workload:88, color:'#34d399' },
+      { name:'ธนา พัฒน์ทวี', role:'Structural Eng.', workload:75, color:'#a78bfa' },
+      { name:'รัตนา กิจเจริญ', role:'M&E Engineer', workload:82, color:'#fbbf24' },
+      { name:'พิชัย ศรีสุข', role:'QS / Cost Control', workload:68, color:'#22d3ee' },
+      { name:'อารีย์ มั่นคง', role:'Safety Officer', workload:70, color:'#f87171' },
+      { name:'กรรณ์ชนก เลิศล้ำ', role:'Architect', workload:85, color:'#fb923c' },
+      { name:'ประเสริฐ ใจดี', role:'Planning Eng.', workload:78, color:'#a78bfa' },
+    ],
+    risks: [
+      { title:'ขาดแคลนแรงงานช่างเชื่อม', desc:'ตลาดแรงงานตึง กระทบงานเหล็ก', level:'hi', impact:'hi', mitigation:'จ้าง Subcontractor สำรอง' },
+      { title:'ฝนตกหนัก มิ.ย.-ส.ค.', desc:'งาน outdoor ล่าช้า 2-3 สัปดาห์', level:'md', impact:'md', mitigation:'แผนงานทดแทนในร่ม' },
+      { title:'Curtain Wall นำเข้าล่าช้า', desc:'Lead time 12 สัปดาห์ จาก supplier', level:'md', impact:'hi', mitigation:'สั่งล่วงหน้า + supplier สำรอง' },
+      { title:'เปลี่ยนแปลงแบบจากเจ้าของ', desc:'Variation Order เพิ่มขอบเขต', level:'lo', impact:'md', mitigation:'Change Control Process' },
+      { title:'อุบัติเหตุงานที่สูง', desc:'ความเสี่ยงด้านความปลอดภัย', level:'lo', impact:'hi', mitigation:'อบรม Safety + ตรวจอุปกรณ์' },
+    ],
+    weekly: [
+      { d:'จ.', n:8, c:'#34d399' }, { d:'อ.', n:12, c:'#4d8df7' },
+      { d:'พ.', n:10, c:'#4d8df7' }, { d:'พฤ.', n:14, c:'#fbbf24' },
+      { d:'ศ.', n:9, c:'#34d399' }, { d:'ส.', n:5, c:'#a78bfa' },
+      { d:'อา.', n:2, c:'#5c6a88' },
+    ],
+    resources: { labor:124, machines:18, utilization:87.3, overtime:42 },
+  };
+
+  document.getElementById('sheetBar').style.display = 'none';
+  renderAll();
+}
+
+// ============ FORMAT ============
+function fmt(n) {
+  if (n >= 1e6) return '฿' + (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return '฿' + (n/1e3).toFixed(0) + 'K';
+  return '฿' + n.toLocaleString();
+}
+function fmtFull(n) { return '฿' + n.toLocaleString(); }
+
+// ============ RENDER ALL ============
+function renderAll() {
+  const c = D.config;
+
+  // Header
+  document.getElementById('projName').textContent = c.name;
+  document.getElementById('projSub').textContent = c.sub;
+  document.getElementById('projStatus').textContent = c.status;
+
+  // Show tabs
+  document.getElementById('tabBar').style.display = 'flex';
+  document.getElementById('loadingMsg').style.display = 'none';
+  document.getElementById('tab-overview').classList.add('show');
+
+  renderKPIs();
+  renderProgress();
+  renderMilestones();
+  renderBudget();
+  renderTasks();
+  renderEVM();
+  renderForecast();
+  renderTeam();
+  renderWeekly();
+  renderResources();
+  renderRisks();
+  renderRiskMatrix();
+
+  setTimeout(() => drawSCurve('cvMini', 300, false), 100);
+}
+
+// ============ KPIs ============
+function renderKPIs() {
+  const c = D.config, b = D.budget;
+  const diff = (c.overallActual - c.overallPlan).toFixed(1);
+  const diffCls = diff >= 0 ? 'pos' : 'neg';
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="c kpi"><div class="kpi-label">ผลงานรวม</div><div class="kpi-val" style="color:var(--blue)">${c.overallActual}%</div><div class="kpi-sub">แผน ${c.overallPlan}% <span class="chip ${diffCls}">${diff >= 0 ? '+' : ''}${diff}%</span></div></div>
+    <div class="c kpi"><div class="kpi-label">วันที่เหลือ</div><div class="kpi-val" style="color:var(--green)">${c.remainDays}</div><div class="kpi-sub">จากทั้งหมด ${c.totalDays} วัน · สิ้นสุด ${c.endDate}</div></div>
+    <div class="c kpi"><div class="kpi-label">งบประมาณใช้ไป</div><div class="kpi-val" style="color:var(--amber)">${fmt(b.spent)}</div><div class="kpi-sub">จาก ${fmt(b.total)} <span class="chip pos">ภายในแผน</span></div></div>
+    <div class="c kpi"><div class="kpi-label">Task สำเร็จ</div><div class="kpi-val" style="color:var(--purple)">${c.taskDone}<span style="font-size:1rem;color:var(--tx-3)">/${c.taskTotal}</span></div><div class="kpi-sub">กำลังทำ ${c.taskWip} · ล่าช้า ${c.taskLate}</div></div>
+    <div class="c kpi"><div class="kpi-label">ความเสี่ยง</div><div class="kpi-val" style="color:var(--red)">${c.riskCount}</div><div class="kpi-sub">สูง ${c.riskHigh} · กลาง ${c.riskMed} · ต่ำ ${c.riskLow}</div></div>`;
+}
+
+// ============ PROGRESS ============
+function renderProgress() {
+  document.getElementById('progressBars').innerHTML = D.progress.map(p => {
+    const d = p.actual - p.plan;
+    const cls = d > 2 ? 'ahead' : d < -2 ? 'behind' : 'ok';
+    return `<div class="pb"><div class="pb-top"><span class="pb-name">${p.name} <span class="pb-wt">(${p.weight}%)</span></span><span class="pb-vals">แผน ${p.plan}% | จริง ${p.actual}% <span class="chip ${d>=0?'pos':'neg'}">${d>=0?'+':''}${d}%</span></span></div><div class="pb-track"><div class="pb-plan" style="width:${p.plan}%"></div><div class="pb-act ${cls}" style="width:${p.actual}%"></div></div></div>`;
+  }).join('');
+}
+
+// ============ MILESTONES ============
+function renderMilestones() {
+  document.getElementById('msList').innerHTML = D.milestones.map((m, i) =>
+    `<div class="ms"><div class="ms-marker"><div class="ms-dot ${m.status}"></div>${i < D.milestones.length-1 ? '<div class="ms-line"></div>' : ''}</div><div class="ms-body"><div class="ms-title">${m.title}</div><div class="ms-date">${m.date}</div>${m.note ? `<div class="ms-note">✦ ${m.note}</div>` : ''}</div></div>`
+  ).join('');
+}
+
+// ============ BUDGET ============
+function renderBudget() {
+  const b = D.budget;
+  const pct = ((b.spent / b.total) * 100).toFixed(1);
+  const dashOff = 364.4 * (1 - pct / 100);
+
+  document.getElementById('budgetBox').innerHTML = `
+    <div class="bud">
+      <div class="bud-ring">
+        <svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="58" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="12"/><circle cx="70" cy="70" r="58" fill="none" stroke="url(#bg)" stroke-width="12" stroke-dasharray="364.4" stroke-dashoffset="${dashOff}" stroke-linecap="round"/><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#fb923c"/></linearGradient></defs></svg>
+        <div class="bud-ctr"><strong style="color:var(--amber)">${pct}%</strong><small>ใช้ไปแล้ว</small></div>
+      </div>
+      <div class="bud-rows">
+        <div class="bud-row"><span>งบทั้งหมด</span><span>${fmtFull(b.total)}</span></div>
+        <div class="bud-row"><span>ใช้ไปแล้ว</span><span style="color:var(--amber)">${fmtFull(b.spent)}</span></div>
+        <div class="bud-row"><span>คงเหลือ</span><span style="color:var(--green)">${fmtFull(b.remaining)}</span></div>
+        <div class="bud-row"><span>ประมาณการณ์สิ้นสุด</span><span style="color:var(--cyan)">${fmtFull(b.estimate)}</span></div>
+      </div>
+    </div>`;
+}
+
+// ============ TASKS ============
+function renderTasks() {
+  const statusMap = { done:'<span class="t-st done">เสร็จสิ้น</span>', wip:'<span class="t-st wip">กำลังทำ</span>', late:'<span class="t-st late">ล่าช้า</span>', wait:'<span class="t-st wait">รอดำเนินการ</span>' };
+  const months22 = D.scurve.months;
+  
+  const dateFromPct = (pct) => {
+    const idx = Math.min(Math.floor(pct / 100 * (months22.length - 1)), months22.length - 1);
+    return months22[idx] || '';
+  };
+
+  document.getElementById('taskBody').innerHTML = D.tasks.map(t => {
+    const planW = t.planEnd - t.start;
+    const actW = planW * t.pct / 100;
+    return `<tr>
+      <td><span class="t-name">${t.name}</span></td>
+      <td><div class="t-who"><div class="t-av" style="background:${t.color}">${t.assignee[0]}</div><span style="font-size:.75rem;color:var(--tx-2)">${t.assignee}</span></div></td>
+      <td style="font-family:var(--mono);font-size:.72rem;color:var(--tx-2)">${dateFromPct(t.start)}</td>
+      <td style="font-family:var(--mono);font-size:.72rem;color:var(--tx-2)">${dateFromPct(t.planEnd)}</td>
+      <td>${statusMap[t.status] || ''}</td>
+      <td style="font-family:var(--mono);font-size:.82rem;font-weight:600">${t.pct}%</td>
+      <td><div class="gantt"><div class="gantt-plan" style="left:${t.start}%;width:${planW}%"></div><div class="gantt-act ${t.status}" style="left:${t.start}%;width:${actW}%"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ EVM ============
+function renderEVM() {
+  const e = D.evm;
+  document.getElementById('evmGrid').innerHTML = [
+    ['PV (Planned Value)', e.PV, ''],
+    ['EV (Earned Value)', e.EV, 'color:var(--green)'],
+    ['AC (Actual Cost)', e.AC, 'color:var(--amber)'],
+    ['BAC (Budget at Completion)', e.BAC, ''],
+    ['SPI (Schedule Perf.)', e.SPI, 'color:var(--green)'],
+    ['CPI (Cost Perf.)', e.CPI, 'color:var(--green)'],
+    ['SV (Schedule Variance)', e.SV, 'color:var(--green)'],
+    ['CV (Cost Variance)', e.CV, 'color:var(--green)'],
+  ].map(([l,v,s]) => `<div class="evm-item"><span>${l}</span><span style="${s}">${v.startsWith && !v.startsWith('฿') && !v.startsWith('+') && !v.startsWith('-') && isNaN(v) ? v : v}</span></div>`).join('');
+}
+
+function renderForecast() {
+  const e = D.evm;
+  document.getElementById('forecastBox').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="evm-item"><span>EAC (Estimate at Completion)</span><span style="color:var(--green)">฿${e.EAC}</span></div>
+      <div class="evm-item"><span>ETC (Estimate to Complete)</span><span>฿${e.ETC}</span></div>
+      <div class="evm-item"><span>VAC (Variance at Completion)</span><span style="color:var(--green)">${e.VAC}</span></div>
+      <div class="evm-item"><span>TCPI (To-Complete Perf.)</span><span>${e.TCPI}</span></div>
+      <div class="evm-item evm-ok"><span>สรุป</span><span>เร็วกว่าแผน & ต่ำกว่างบ ✓</span></div>
+    </div>`;
+}
+
+// ============ TEAM ============
+function renderTeam() {
+  document.getElementById('teamGrid').innerHTML = D.team.map(m => {
+    const wc = m.workload > 85 ? 'var(--red)' : m.workload > 70 ? 'var(--amber)' : 'var(--green)';
+    return `<div class="tm"><div class="tm-av" style="background:${m.color}">${m.name[0]}</div><div class="tm-info"><div class="tm-name">${m.name}</div><div class="tm-role">${m.role}</div><div class="tm-bar"><div class="tm-fill" style="width:${m.workload}%;background:${wc}"></div></div></div><div class="tm-pct" style="color:${wc}">${m.workload}%</div></div>`;
+  }).join('');
+}
+
+function renderWeekly() {
+  const wk = D.weekly || [{ d:'จ.',n:8,c:'#34d399'},{ d:'อ.',n:12,c:'#4d8df7'},{ d:'พ.',n:10,c:'#4d8df7'},{ d:'พฤ.',n:14,c:'#fbbf24'},{ d:'ศ.',n:9,c:'#34d399'},{ d:'ส.',n:5,c:'#a78bfa'},{ d:'อา.',n:2,c:'#5c6a88'}];
+  document.getElementById('wkGrid').innerHTML = wk.map(w => `<div class="wk"><div class="wk-d">${w.d}</div><div class="wk-n" style="color:${w.c}">${w.n}</div></div>`).join('');
+}
+
+function renderResources() {
+  const r = D.resources || { labor:124, machines:18, utilization:87.3, overtime:42 };
+  document.getElementById('resBox').innerHTML = `
+    <h4>สรุปทรัพยากร</h4>
+    <dl class="res-row">
+      <dt>แรงงานวันนี้</dt><dd>${r.labor} คน</dd>
+      <dt>เครื่องจักร</dt><dd>${r.machines} รายการ</dd>
+      <dt>Utilization</dt><dd style="color:var(--green)">${r.utilization}%</dd>
+      <dt>OT สัปดาห์นี้</dt><dd style="color:var(--amber)">${r.overtime} ชม.</dd>
+    </dl>`;
+}
+
+// ============ RISKS ============
+function renderRisks() {
+  const impLabel = { hi:'สูง', md:'กลาง', lo:'ต่ำ' };
+  document.getElementById('riskList').innerHTML = D.risks.map(r =>
+    `<div class="rsk"><div class="rsk-bar ${r.level}"></div><div class="rsk-body"><div class="rsk-title">${r.title}</div><div class="rsk-desc">${r.desc}</div>${r.mitigation ? `<div class="rsk-mit">🛡 ${r.mitigation}</div>`:''}</div><div class="rsk-imp ${r.impact}">${impLabel[r.impact]||r.impact}</div></div>`
+  ).join('');
+}
+
+function renderRiskMatrix() {
+  const lvl = ['hi','md','lo'], imp = ['lo','md','hi'];
+  const lvlLabel = ['โอกาสสูง','โอกาสกลาง','โอกาสต่ำ'];
+  const impLabel = ['ผลกระทบต่ำ','ผลกระทบกลาง','ผลกระทบสูง'];
+  const cellColor = {
+    'hi-lo':'var(--amber-dim)','hi-md':'var(--red-dim)','hi-hi':'var(--red-dim)',
+    'md-lo':'var(--green-dim)','md-md':'var(--amber-dim)','md-hi':'var(--red-dim)',
+    'lo-lo':'var(--green-dim)','lo-md':'var(--green-dim)','lo-hi':'var(--amber-dim)',
+  };
+  const cellBorder = {
+    'hi-lo':'rgba(251,191,36,.2)','hi-md':'rgba(248,113,113,.2)','hi-hi':'rgba(248,113,113,.2)',
+    'md-lo':'rgba(52,211,153,.2)','md-md':'rgba(251,191,36,.2)','md-hi':'rgba(248,113,113,.2)',
+    'lo-lo':'rgba(52,211,153,.2)','lo-md':'rgba(52,211,153,.2)','lo-hi':'rgba(251,191,36,.2)',
+  };
+
+  let html = '<div class="mx">';
+  html += '<div class="mx-hd"></div>';
+  imp.forEach((_,ci) => html += `<div class="mx-hd">${impLabel[ci]}</div>`);
+  lvl.forEach((l,ri) => {
+    html += `<div class="mx-hd">${lvlLabel[ri]}</div>`;
+    imp.forEach(im => {
+      const count = D.risks.filter(r => r.level === l && r.impact === im).length;
+      const key = l + '-' + im;
+      html += `<div class="mx-cell" style="background:${cellColor[key]};border:1px solid ${cellBorder[key]};color:${count ? 'var(--tx-0)' : 'transparent'}">${count || '0'}</div>`;
+    });
+  });
+  html += '</div>';
+  document.getElementById('riskMatrix').innerHTML = html;
+}
+
+// ============ S-CURVE CANVAS ============
+function drawSCurve(id, h, full) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width;
+
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+
+  const pad = { t:28, r:28, b:48, l:52 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+  const sc = D.scurve;
+  const n = sc.months.length;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(36,48,82,0.35)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const y = pad.t + ch * (1 - i/10);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+    ctx.fillStyle = '#5c6a88'; ctx.font = '11px JetBrains Mono'; ctx.textAlign = 'right';
+    ctx.fillText(i*10 + '%', pad.l - 8, y + 4);
+  }
+
+  // X labels
+  const step = full ? (n > 16 ? 2 : 1) : 3;
+  ctx.textAlign = 'center'; ctx.fillStyle = '#5c6a88'; ctx.font = '10px JetBrains Mono';
+  for (let i = 0; i < n; i += step) {
+    const x = pad.l + (i / (n-1)) * cw;
+    ctx.fillText(sc.months[i], x, h - pad.b + 18);
+  }
+
+  function smooth(data, color, dash) {
+    if (!data || data.length < 2) return;
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.setLineDash(dash ? [6,4] : []);
+    for (let i = 0; i < data.length; i++) {
+      const x = pad.l + (i/(n-1)) * cw;
+      const y = pad.t + ch * (1 - data[i]/100);
+      if (i === 0) ctx.moveTo(x,y);
+      else {
+        const px = pad.l + ((i-1)/(n-1)) * cw;
+        const py = pad.t + ch * (1 - data[i-1]/100);
+        const mx = (px+x)/2;
+        ctx.bezierCurveTo(mx, py, mx, y, x, y);
+      }
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // Fill under actual
+  if (sc.actual.length > 1) {
+    ctx.beginPath();
+    for (let i = 0; i < sc.actual.length; i++) {
+      const x = pad.l + (i/(n-1)) * cw;
+      const y = pad.t + ch * (1 - sc.actual[i]/100);
+      if (i === 0) ctx.moveTo(x,y);
+      else { const px = pad.l + ((i-1)/(n-1))*cw; const py = pad.t+ch*(1-sc.actual[i-1]/100); ctx.bezierCurveTo((px+x)/2,py,(px+x)/2,y,x,y); }
+    }
+    const lx = pad.l + ((sc.actual.length-1)/(n-1)) * cw;
+    ctx.lineTo(lx, pad.t+ch); ctx.lineTo(pad.l, pad.t+ch); ctx.closePath();
+    const g = ctx.createLinearGradient(0, pad.t, 0, pad.t+ch);
+    g.addColorStop(0, 'rgba(52,211,153,0.10)'); g.addColorStop(1, 'rgba(52,211,153,0.01)');
+    ctx.fillStyle = g; ctx.fill();
+  }
+
+  // Lines
+  smooth(sc.plan, '#4d8df7', true);
+  smooth(sc.actual, '#34d399', false);
+  if (full && sc.ev) smooth(sc.ev, '#fbbf24', false);
+
+  // Current dot
+  if (sc.actual.length > 0) {
+    const ci = sc.actual.length - 1;
+    const cx = pad.l + (ci/(n-1)) * cw;
+    const cy = pad.t + ch * (1 - sc.actual[ci]/100);
+    ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fillStyle='#34d399'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,9,0,Math.PI*2); ctx.strokeStyle='rgba(52,211,153,0.3)'; ctx.lineWidth=2; ctx.stroke();
+    // Today line
+    ctx.beginPath(); ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t+ch); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='10px JetBrains Mono'; ctx.textAlign='center';
+    ctx.fillText('วันนี้', cx, pad.t - 8);
+  }
+}
+
+// ============ RESIZE ============
+window.addEventListener('resize', () => {
+  if (document.getElementById('tab-overview').classList.contains('show')) drawSCurve('cvMini', 300, false);
+  if (document.getElementById('tab-scurve').classList.contains('show')) drawSCurve('cvFull', 400, true);
+});
+
+// ============ AUTO-LOAD ============
+// ถ้ามี hash parameter ให้ load sheet อัตโนมัติ
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const sheetParam = params.get('sheet');
+  if (sheetParam) {
+    document.getElementById('sheetUrl').value = sheetParam;
+    connectSheet();
+  }
+})();
+</script>
+</body>
+</html>
